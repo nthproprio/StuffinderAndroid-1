@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.stuffinder.R;
 import com.stuffinder.data.Tag;
@@ -27,6 +28,19 @@ public class InterieurActivity extends Activity {
         Intent intentRetour = new Intent (InterieurActivity.this, HomeActivity.class);
         startActivity(intentRetour); }
 
+    public void goToLoc (View view) {
+
+        int rang = mListInt.getCheckedItemPosition() ;
+        Tag tag = arrayAdapter.get(rang);
+
+        LocalisationActivity.ChangeTag(tag);
+
+        if (isConnected(tag.getUid()) == true)
+        {Intent intentLoc = new Intent (InterieurActivity.this, LocalisationActivity.class);
+        startActivity(intentLoc);}
+        else { Toast.makeText(InterieurActivity.this, "Objet non détecté", Toast.LENGTH_LONG).show(); }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +52,7 @@ public class InterieurActivity extends Activity {
         tagArrayAdapter.addAll(arrayAdapter);
 
         mListInt.setAdapter(tagArrayAdapter);
+        mListInt.setItemChecked(0,true);
 /*
         GridView grid = (GridView)findViewById(R.id.gridView);
 

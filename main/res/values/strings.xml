@@ -19,5 +19,6 @@
     <string name="title_activity_modif_tag">ModifTagActivity</string>
     <string name="title_activity_suppr_tag">SupprTagActivity</string>
     <string name="title_activity_tags">TagsActivity</string>
+    <string name="title_activity_localisation">LocalisationActivity</string>
 
 </resources>

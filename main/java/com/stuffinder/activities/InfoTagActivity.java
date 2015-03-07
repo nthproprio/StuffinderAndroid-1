@@ -43,7 +43,7 @@ public class InfoTagActivity extends Activity {
         Intent intentRetour = new Intent (InfoTagActivity.this, ModifTagActivity.class);
         startActivity(intentRetour); }
 
-    public void creerCompte (View view) {
+    public void modifTag (View view) {
 
         try {
             NetworkServiceProvider.getNetworkService().modifyObjectName(tagModif, EditTextNom.getText().toString()) ;

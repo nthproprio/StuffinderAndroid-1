@@ -54,9 +54,6 @@ public class ModifTagActivity extends Activity {
         mListModif.setAdapter(tagArrayAdapter);
         mListModif.setItemChecked(0, true);
 
-
-
-
     }
 
     public static void ChangeTagsList(List<Tag> list)
