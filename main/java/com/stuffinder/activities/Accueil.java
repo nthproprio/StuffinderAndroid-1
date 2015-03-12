@@ -13,7 +13,6 @@ import com.stuffinder.R;
 import com.stuffinder.engine.NetworkServiceProvider;
 import com.stuffinder.exceptions.NetworkServiceException;
 import com.stuffinder.tests.NetworkServiceEmulator;
-import com.stuffinder.webservice.NetworkService;
 
 
 public class Accueil extends Activity {
@@ -39,7 +38,7 @@ public class Accueil extends Activity {
 
         setContentView(R.layout.activity_accueil);
 
-        NetworkServiceProvider.setNetworkService(NetworkService.getInstance());
+        NetworkServiceProvider.setNetworkService(NetworkServiceEmulator.getInstance());
         try {
             NetworkServiceProvider.getNetworkService().initNetworkService();
         } catch (NetworkServiceException e) {
