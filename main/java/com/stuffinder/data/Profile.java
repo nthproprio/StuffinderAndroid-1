@@ -3,6 +3,7 @@ package com.stuffinder.data;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class Profile
 {
 	private List<Tag> tags;
@@ -47,4 +48,11 @@ public class Profile
 		return (!(obj instanceof Profile)) ? false : 
 					name.equals(((Profile) obj).getName());
 	}
+
+	public int hashCode()
+	{
+		return name.hashCode();
+	}
+	
+	
 }
