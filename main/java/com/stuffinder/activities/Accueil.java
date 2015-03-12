@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.stuffinder.R;
 import com.stuffinder.engine.NetworkServiceProvider;
 import com.stuffinder.exceptions.NetworkServiceException;
-import com.stuffinder.tests.NetworkServiceEmulator;
+import com.stuffinder.tests.NetworkService;
 
 
 public class Accueil extends Activity {
@@ -38,7 +38,7 @@ public class Accueil extends Activity {
 
         setContentView(R.layout.activity_accueil);
 
-        NetworkServiceProvider.setNetworkService(NetworkServiceEmulator.getInstance());
+        NetworkServiceProvider.setNetworkService(NetworkService.getInstance());
         try {
             NetworkServiceProvider.getNetworkService().initNetworkService();
         } catch (NetworkServiceException e) {
