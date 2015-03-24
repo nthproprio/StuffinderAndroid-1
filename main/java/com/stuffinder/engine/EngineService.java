@@ -301,7 +301,7 @@ public class EngineService {
     }
 
 // for manual synchronization.
-
+//TODO optimization to resolve possible conflicts.
     public void synchroniseWithServer() throws NotAuthenticatedException, NetworkServiceException, SynchronisationConflictException, EngineServiceException {
         if(currentAccount == null)
             throw new NotAuthenticatedException();
@@ -518,13 +518,12 @@ public class EngineService {
     }
 
 
-    //TODO overwrite server version to do.
+//TODO implement server version overwrite.
 
     public void overwriteServerVersion() throws NotAuthenticatedException, NetworkServiceException
     {
     }
 
-    // TODO implement this overwrite for server version.
     class OverwriteServerVersionThread extends Thread
     {
         private boolean isOverwriteSuccessful;
@@ -558,6 +557,7 @@ public class EngineService {
             return catchedException;
         }
     }
+
 
 
 // For auto-synchronization.
@@ -608,6 +608,8 @@ public class EngineService {
     }
 
 
+//TODO implement auto update about account information, tags and profiles.
+//TODO Implement a system for request errors processing.
     class AutoSynchronizer extends Thread
     {
         private BlockingQueue<Request> requestQueue;
