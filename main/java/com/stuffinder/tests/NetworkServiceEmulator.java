@@ -1,9 +1,6 @@
 package com.stuffinder.tests;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 
 import com.stuffinder.data.Account;
 import com.stuffinder.data.Profile;
@@ -14,7 +11,19 @@ import com.stuffinder.exceptions.IllegalFieldException;
 import com.stuffinder.exceptions.NetworkServiceException;
 import com.stuffinder.exceptions.NotAuthenticatedException;
 import com.stuffinder.interfaces.NetworkServiceInterface;
-import static com.stuffinder.exceptions.IllegalFieldException.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.stuffinder.exceptions.IllegalFieldException.PROFILE_NAME;
+import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_ALREADY_USED;
+import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_INCORRECT;
+import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_NOT_FOUND;
+import static com.stuffinder.exceptions.IllegalFieldException.TAG_UID;
+
+
 
 public class NetworkServiceEmulator implements NetworkServiceInterface
 {
@@ -33,8 +42,7 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 		accounts = new ArrayList<>();
 		passwords = new ArrayList<>();
 		tags = new HashSet<>();
-		
-		
+
 		authenticatedAccount = null;
 		
 		
@@ -255,7 +263,7 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 		if(tag.getObjectImageName() != null && FieldVerifier.verifyImageFileName(newImageFileName) == false)
 			throw new IllegalFieldException(IllegalFieldException.TAG_OBJECT_IMAGE, IllegalFieldException.REASON_VALUE_INCORRECT, newImageFileName);
 		
-		
+
 		int index = authenticatedAccount.getTags().indexOf(tag);
 		
 		if(index < 0)
@@ -599,5 +607,6 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 	{
 		return emulator;
 	}
+
 
 }
