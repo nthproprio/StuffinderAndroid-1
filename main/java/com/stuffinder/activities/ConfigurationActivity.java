@@ -31,6 +31,11 @@ public class ConfigurationActivity extends Activity {
         startActivity(intentPuces);
     }
 
+    public void goToSynch (View view) {
+        Intent intentSynch = new Intent ( ConfigurationActivity.this, SynchroActivity.class);
+        startActivity(intentSynch);
+    }
+
     public void retour1 (View view) {
         finish();
     }
