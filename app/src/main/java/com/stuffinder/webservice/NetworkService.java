@@ -30,6 +30,14 @@ import com.stuffinder.exceptions.NetworkServiceException;
 import com.stuffinder.exceptions.NotAuthenticatedException;
 import com.stuffinder.interfaces.NetworkServiceInterface;
 
+import static com.stuffinder.webservice.ConstantsWebService.server_address;
+import static com.stuffinder.webservice.ErrorCode.DATABASE_ACCESS_ISSUE;
+import static com.stuffinder.webservice.ErrorCode.INFORMATION_INCOMPLETE;
+import static com.stuffinder.webservice.ErrorCode.INVALID_PSEUDO_PASSWORD_COMBINATION;
+import static com.stuffinder.webservice.ErrorCode.NO_ERROR;
+import static com.stuffinder.webservice.ErrorCode.UNKNOWN_ERROR;
+import static com.stuffinder.webservice.ErrorCode.USER_ALREADY_REGISTERED;
+
 public class NetworkService implements NetworkServiceInterface {
 
     private static HttpClient client;
@@ -112,7 +120,7 @@ public class NetworkService implements NetworkServiceInterface {
         String result = "";
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/register?pseudo=" + newAccount.getPseudo() + "&password=" + newPassword + "&first_name=" + newAccount.getFirstName() + "&last_name=" + newAccount.getLastName() + "&email=" + newAccount.getEMailAddress()));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address +"register?pseudo=" + newAccount.getPseudo() + "&password=" + newPassword + "&first_name=" + newAccount.getFirstName() + "&last_name=" + newAccount.getLastName() + "&email=" + newAccount.getEMailAddress()));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -125,24 +133,28 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
-                            // currentAccount = new Account(obj.getString("pseudo"), obj.getString("first_name"), obj.getString("last_name"), obj.getString("email"));
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
+                            /* Everything went fine */
                         }
                         // Else display error message
-                        else if (returnCode == 1) {
+                        else if (returnCode == USER_ALREADY_REGISTERED) {
                             currentPassword = null;
                             throw new IllegalFieldException(IllegalFieldException.PSEUDO, IllegalFieldException.REASON_VALUE_ALREADY_USED, newAccount.getPseudo());
+
+                        }else if (returnCode == ErrorCode.ILLEGAL_USE_OF_SPECIAL_CHARACTER) {
+                             currentPassword = null;
+                             throw new NetworkServiceException("Illegal use of special character");
+
                         } else {
                             currentPassword = null;
                             throw new IllegalFieldException(IllegalFieldException.PSEUDO, IllegalFieldException.REASON_VALUE_INCORRECT, newAccount.getPseudo());
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -158,12 +170,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
     }
@@ -180,11 +192,11 @@ public class NetworkService implements NetworkServiceInterface {
             throw new IllegalFieldException(IllegalFieldException.PASSWORD, IllegalFieldException.REASON_VALUE_INCORRECT, password);
 
         InputStream inputStream;
-        String result = "";
+        String result;
 
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/login?pseudo=" + pseudo + "&password=" + password));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "login?pseudo=" + pseudo + "&password=" + password));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -198,13 +210,12 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
                             currentAccount = new Account(obj.getString("pseudo"), obj.getString("first_name"), obj.getString("last_name"), obj.getString("email"));
-                            currentPassword = password; // correction.
+                            currentPassword = password; // correction
                         }
-                        // Else display error message
-                        else if (returnCode == 1) {
+                        else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
                             currentPassword = null;
                             throw new AccountNotFoundException();
                         }
@@ -213,7 +224,7 @@ public class NetworkService implements NetworkServiceInterface {
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -230,12 +241,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
         return currentAccount;
@@ -316,10 +327,10 @@ public class NetworkService implements NetworkServiceInterface {
             throw new IllegalFieldException(IllegalFieldException.EMAIL_ADDRESS, IllegalFieldException.REASON_VALUE_INCORRECT, emailAddress);
 
         InputStream inputStream;
-        String result = "";
+        String result;
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/modifyemail?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&new_email=" + emailAddress));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "modifyemail?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&new_email=" + emailAddress));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -332,22 +343,21 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
                             currentAccount.setMailAddress(obj.getString("email"));
-                        }
-                        // Else display error message
-                        else if (returnCode == 1) {
+                        }else if (returnCode == DATABASE_ACCESS_ISSUE) {
                             throw new NetworkServiceException("Problem of access to the DB");
-                        } else {
+                        }else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
                             throw new NotAuthenticatedException();
+                        } else {
+                            throw new NetworkServiceException("Unknown Error");
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -364,12 +374,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("Exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("Error occurred while executing request.");
         }
 
     }
@@ -383,10 +393,10 @@ public class NetworkService implements NetworkServiceInterface {
             throw new IllegalFieldException(IllegalFieldException.PASSWORD, IllegalFieldException.REASON_VALUE_INCORRECT, newPassword);
 
         InputStream inputStream;
-        String result = "";
+        String result;
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/modifypassword?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&new_password=" + newPassword));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "modifypassword?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&new_password=" + newPassword));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -399,22 +409,24 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
                             currentPassword = newPassword;
-                        }
-                        // Else display error message
-                        else if (returnCode == 1) {
-                            throw new NetworkServiceException("Problem of access to the DB");
-                        } else {
+                        }else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
                             throw new NotAuthenticatedException();
+                        }else if (returnCode == DATABASE_ACCESS_ISSUE) {
+                            throw new NetworkServiceException("Problem of access to the DB");
+                        }else if (returnCode == UNKNOWN_ERROR) {
+                            throw new NetworkServiceException("Unknown error");
+
+                        } else {
+                            throw new NetworkServiceException("Unknown error");
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -431,12 +443,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
     }
 
@@ -452,7 +464,7 @@ public class NetworkService implements NetworkServiceInterface {
         String result = "";
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/retrievetag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "retrievetag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -465,8 +477,8 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
                             org.json.JSONArray arrayOfJsonTag = obj.getJSONArray("listTags");
                             for (int i = 0; i < arrayOfJsonTag.length(); i++) {
                                 JSONObject tagjson = arrayOfJsonTag.getJSONObject(i);
@@ -474,19 +486,17 @@ public class NetworkService implements NetworkServiceInterface {
                                 res.add(tag);
                             }
                         }
-                        // Else display error message
 
                         else {
                             throw new NotAuthenticatedException();
                         }
                     } catch (JSONException e) {
-                        Log.e("content of the catched JSON", result);
+                        Log.e("Content of the catched JSON", result);
                         e.printStackTrace();
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -503,14 +513,14 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
             e.printStackTrace();
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
             e.printStackTrace();
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
         return res;
@@ -530,7 +540,7 @@ public class NetworkService implements NetworkServiceInterface {
         String result = "";
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/addtag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid() + "&object_name=" + tag.getObjectName() + "&picture=" + tag.getObjectImageName()));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "addtag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid() + "&object_name=" + tag.getObjectName() + "&picture=" + tag.getObjectImageName()));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -543,20 +553,24 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
-                        }
-                        // Else display error message
-
-                        else {
-                            throw new NetworkServiceException("Wrong pseudo/password combination or access to the DB");
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
+                        }else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
+                        throw new NotAuthenticatedException();
+                         }else if (returnCode == DATABASE_ACCESS_ISSUE) {
+                             throw new NetworkServiceException("Problem of access to the DB");
+                         }else if (returnCode == UNKNOWN_ERROR) {
+                            throw new NetworkServiceException("Unknown error");
+                        }else if (returnCode == INFORMATION_INCOMPLETE) {
+                            throw new NetworkServiceException("Information incomplete");
+                         }else {
+                            throw new NetworkServiceException("Unknown error");
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -573,12 +587,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
         return tag;
@@ -596,7 +610,7 @@ public class NetworkService implements NetworkServiceInterface {
         String result = "";
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/modifyobjectname?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid() + "&new_object_name=" + newObjectName));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "modifyobjectname?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid() + "&new_object_name=" + newObjectName));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -609,22 +623,23 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
                             tag.setObjectName(obj.getString("newobjectname"));
-                        }
-                        // Else display error message
-                        else if (returnCode == 1) {
-                            throw new NetworkServiceException("Problem of access to the DB");
-                        } else {
-                            throw new NotAuthenticatedException();
+                         }else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
+                                throw new NotAuthenticatedException();
+                         }else if (returnCode == DATABASE_ACCESS_ISSUE) {
+                                throw new NetworkServiceException("Problem of access to the DB");
+                         }else if (returnCode == UNKNOWN_ERROR) {
+                             throw new NetworkServiceException("Unknown error");
+                         } else {
+                            throw new NetworkServiceException("Unknown error");
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -641,12 +656,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
         return tag;
@@ -667,7 +682,7 @@ public class NetworkService implements NetworkServiceInterface {
         String result = "";
         try {
             // make GET request to the given URL
-            HttpResponse httpResponse = executeRequest(new HttpGet("http://92.222.33.38:8080/app_server/ns/deletetag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid()));
+            HttpResponse httpResponse = executeRequest(new HttpGet(server_address + "deletetag?pseudo=" + currentAccount.getPseudo() + "&password=" + currentPassword + "&id=" + tag.getUid()));
             StatusLine statusLine = httpResponse.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -680,21 +695,25 @@ public class NetworkService implements NetworkServiceInterface {
                     try {
                         // creation JSON Object
                         JSONObject obj = new JSONObject(result);
-                        int returnCode = obj.getInt("returncode");
-                        if (returnCode == 0) {
-                        }
-                        // Else display error message
-                        else if (returnCode == 1) {
-                            throw new NetworkServiceException("Problem of access to the DB");
-                        } else {
+                        int returnCode = obj.getInt("returnCode");
+                        if (returnCode == NO_ERROR) {
+                        }else if (returnCode == INVALID_PSEUDO_PASSWORD_COMBINATION) {
                             throw new NotAuthenticatedException();
+                        }else if (returnCode == DATABASE_ACCESS_ISSUE) {
+                            throw new NetworkServiceException("Problem of access to the DB");
+                        }else if (returnCode == UNKNOWN_ERROR) {
+                            throw new NetworkServiceException("Unknown error");
+                        }else if (returnCode == INFORMATION_INCOMPLETE) {
+                            throw new NetworkServiceException("Information incomplete");
+                        }else {
+                            throw new NetworkServiceException("Unknown error");
                         }
                     } catch (JSONException e) {
-                        // "Error Occured [Server's JSON response might be invalid]!"
+                        // "Error Occurred [Server's JSON response might be invalid]!"
                         throw new NetworkServiceException("Server response might be invalid.");
                     }
                 } else {
-                    throw new NetworkServiceException("Connection issue with ther server, null imput stream");
+                    throw new NetworkServiceException("Connection issue with the server, null input stream");
                 }
             }
 
@@ -711,12 +730,12 @@ public class NetworkService implements NetworkServiceInterface {
 
             // When Http response code other than 404, 500
             else {
-                throw new NetworkServiceException("Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
+                throw new NetworkServiceException("Unexpected Error occurred! [Most common Error: Device might not be connected to Internet or remote server is not up and running]");
             }
         } catch (IOException | IllegalStateException e) {
-            throw new NetworkServiceException("exception of type IOExcption or IllegalStateException catched.");
+            throw new NetworkServiceException("exception of type IOException or IllegalStateException catched.");
         } catch (InterruptedException e) {
-            throw new NetworkServiceException("error occured while executing request.");
+            throw new NetworkServiceException("error occurred while executing request.");
         }
 
     }
@@ -789,6 +808,16 @@ public class NetworkService implements NetworkServiceInterface {
             NetworkServiceException {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public int getLastTagsUpdateTime() throws NetworkServiceException {
+        return 0;
+    }
+
+    @Override
+    public int getLastProfilesUpdateTime() throws NetworkServiceException {
+        return 0;
     }
 
 
