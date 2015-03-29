@@ -1,6 +1,9 @@
 package com.stuffinder.tests;
 
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.stuffinder.data.Account;
 import com.stuffinder.data.Profile;
@@ -11,19 +14,7 @@ import com.stuffinder.exceptions.IllegalFieldException;
 import com.stuffinder.exceptions.NetworkServiceException;
 import com.stuffinder.exceptions.NotAuthenticatedException;
 import com.stuffinder.interfaces.NetworkServiceInterface;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static com.stuffinder.exceptions.IllegalFieldException.PROFILE_NAME;
-import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_ALREADY_USED;
-import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_INCORRECT;
-import static com.stuffinder.exceptions.IllegalFieldException.REASON_VALUE_NOT_FOUND;
-import static com.stuffinder.exceptions.IllegalFieldException.TAG_UID;
-
-
+import static com.stuffinder.exceptions.IllegalFieldException.*;
 
 public class NetworkServiceEmulator implements NetworkServiceInterface
 {
@@ -42,7 +33,8 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 		accounts = new ArrayList<>();
 		passwords = new ArrayList<>();
 		tags = new HashSet<>();
-
+		
+		
 		authenticatedAccount = null;
 		
 		
@@ -263,7 +255,7 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 		if(tag.getObjectImageName() != null && FieldVerifier.verifyImageFileName(newImageFileName) == false)
 			throw new IllegalFieldException(IllegalFieldException.TAG_OBJECT_IMAGE, IllegalFieldException.REASON_VALUE_INCORRECT, newImageFileName);
 		
-
+		
 		int index = authenticatedAccount.getTags().indexOf(tag);
 		
 		if(index < 0)
@@ -600,13 +592,35 @@ public class NetworkServiceEmulator implements NetworkServiceInterface
 		
 		return authenticatedAccount.getProfiles();
 	}
-	
-	
 
-	public static NetworkServiceEmulator getInstance()
+    @Override
+    public Profile modifyProfileName(Profile profile, String newProfileName) throws NotAuthenticatedException, IllegalFieldException, NetworkServiceException
+    {
+        if(authenticatedAccount == null)
+            throw new NotAuthenticatedException();
+
+        if(!FieldVerifier.verifyName(newProfileName))
+            throw new IllegalFieldException(PROFILE_NAME, REASON_VALUE_INCORRECT, newProfileName);
+
+        int index = authenticatedAccount.getProfiles().indexOf(new Profile(profile.getName()));
+
+        if(index < 0)
+            throw new IllegalFieldException(PROFILE_NAME, REASON_VALUE_NOT_FOUND, profile.getName());
+
+        Profile tmp = authenticatedAccount.getProfiles().get(index);
+
+        for(Profile otherProfile : authenticatedAccount.getProfiles())
+            if(otherProfile != tmp && otherProfile.getName().equals(newProfileName))
+                throw new IllegalFieldException(PROFILE_NAME, REASON_VALUE_ALREADY_USED, newProfileName);
+
+        tmp.setName(newProfileName);
+
+        return tmp;
+    }
+
+    public static NetworkServiceEmulator getInstance()
 	{
 		return emulator;
 	}
-
 
 }
